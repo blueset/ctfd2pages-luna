@@ -23,7 +23,7 @@ const makeFlagsJson = async () => {
     const chalJson = JSON.parse(await realfs.promises.readFile(chalJsonPath));
     chalname2id[chalJson.data.name] = chalJson.data.id;
   }
-
+  // console.log('chalname2id', chalname2id);
   const flags = {};
   if (EXPORT_PATH?.length) {
     const chalIds = Object.values(chalname2id);
@@ -71,7 +71,7 @@ const makeFlagsJson = async () => {
       console.log(`No flag found for challenge ${name}`);
     }
   }
-
+  console.log('flags', flags);
   return flags;
 };
 

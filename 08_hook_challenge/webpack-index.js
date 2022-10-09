@@ -1,7 +1,7 @@
 /* global CTFd */
 
 const FLAGS = require('./flags.json');
-const md = CTFd.lib.markdown();
+const escape = CTFd.utils.html.htmlEntities;
 
 const sha256sum = async (string) => {
   const utf8 = new TextEncoder().encode(string);
@@ -11,9 +11,8 @@ const sha256sum = async (string) => {
       .join('');
 };
 
-CTFd.api.post_challenge_attempt = async function(parameters, body) {
-  const {challenge_id: chalId, submission: flag} = body;
-  const expectedSHA = FLAGS[chalId];
+CTFd.pages.challenge.submitChallenge = async function(chalId, flag) {
+  const expectedSHA = FLAGS[`${chalId}`];
   const submittedSHA = await sha256sum(flag);
 
   if (!expectedSHA?.length) {
@@ -46,9 +45,7 @@ CTFd.api.post_challenge_attempt = async function(parameters, body) {
   }
 };
 
-CTFd.api.get_hint = async function(parameters) {
-  const hintId = parameters.hintId;
-
+CTFd.pages.challenge.loadHint = async function(hintId) {
   for (const hintOrig of CTFd._internal.challenge.data.hints) {
     if (hintOrig.id !== hintId) {
       continue;
@@ -56,7 +53,7 @@ CTFd.api.get_hint = async function(parameters) {
 
     const hint = Object.assign({}, hintOrig);
     if (hint.html === undefined) {
-      hint.html = md.render(hint.content);
+      hint.html = escape(hint.content);
     }
 
     return {

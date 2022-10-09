@@ -216,23 +216,25 @@ class PageHandler {
     } else if (this.pageUrl === `${this.parent.origin}challenges`) {
       const chals = await page.evaluate(() => {
         return Array.from(document.querySelectorAll(
-            '.challenge-button')).map((e) => e.parentElement.id);
+            '.challengeItem[data-is-center]')).map((e) => e.dataset.id);
       });
+      console.log('chals:', chals);
 
       for (const chal of chals) {
         // Challenge Tab
+        console.log('chal:', chal);
         this.browseCompleted = new HeartBeat();
         await page.evaluate((chal) => {
-          document.getElementById(chal)
-              .querySelector('.challenge-button')
+          document.querySelector('.challengeItem[data-id="' + chal + '"]')
               .click();
         }, chal);
         await this.browseCompleted.wait();
 
         const handouts = await page.evaluate(() => {
           return Array.from(document.querySelectorAll(
-              '.challenge-files a')).map((e) => e.href);
+              '.buttonRow a')).map((e) => e.href);
         });
+        console.log('handouts of', chal, '=', handouts);
         for (const handout of handouts) {
           assert(handout.startsWith(this.parent.origin));
           this.parent.allHandouts.add(handout);
@@ -241,7 +243,7 @@ class PageHandler {
         // Solves Tab
         this.browseCompleted = new HeartBeat();
         await page.evaluate(() => {
-          document.querySelector('.challenge-solves').click();
+          document.querySelector('.solvers button').click();
         }, chal);
         await this.browseCompleted.wait();
 
@@ -267,6 +269,14 @@ class PageHandler {
 
     for (let link of links) {
       if (!link.startsWith(this.parent.origin)) {
+        continue;
+      }
+
+      if (!(
+        link.startsWith(this.parent.origin + 'challenges') ||
+          link.startsWith(this.parent.origin + 'api/v1/challenge') ||
+          link.startsWith(this.parent.origin + 'files')
+      )) {
         continue;
       }
 
@@ -370,7 +380,8 @@ class Ctfd2Pages {
   async run() {
     const browser = await puppeteer.launch({headless: true});
 
-    this.pushpage(this.origin);
+    // this.pushpage(this.origin);
+    this.pushpage(`${this.origin}challenges`);
     this.pushpage(`${this.origin}404`);
 
     while (this.toVisit.length) {

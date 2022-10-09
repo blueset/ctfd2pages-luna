@@ -20,21 +20,57 @@ const main = async function() {
     const {window} = new JSDOM(inputhtml);
     const {document} = window;
 
-    let targetNode = Array.from(document.querySelectorAll('a[href="/login"]'));
-    assert(targetNode.length === 1);
-    [targetNode] = targetNode;
+    let replaceRaw;
+    let targetRaw;
+    let outputhtml;
 
-    targetNode = targetNode.closest('ul.navbar-nav');
-    const deletionRaw = util.expandHTMLs(
-        targetNode, 'previous', (node) => node.tagName === 'HR');
-    const deletion = await util.findWithFixup(
-        inputhtml, deletionRaw, lastFixup);
+    let targetNode = Array.from(document.querySelectorAll('a.alternate[href="/login"]'));
+    if (targetNode.length === 1) {
+      [targetNode] = targetNode;
 
-    const outputhtml = inputhtml.replace(
-        new RegExp(util.makeRegexForLine(deletion)), '');
-    assert(outputhtml !== inputhtml);
+      // targetNode = targetNode.closest('ul.navbar-nav');
+      // const deletionRaw = util.expandHTMLs(
+      //     targetNode, 'previous', (node) => node.tagName === 'HR');
+      // const deletion = await util.findWithFixup(
+      //     inputhtml, deletionRaw, lastFixup);
 
-    fs.writeFileSync(file, outputhtml);
+      replaceRaw = targetNode.outerHTML;
+      targetNode.attributes.href.value = 'https://github.com/project-sekai-ctf/sekaictf-2022/';
+      targetNode.querySelector('iconify-icon').attributes.icon.value = 'mdi:github';
+      targetNode.querySelector('span').innerHTML = 'GitHub';
+      targetRaw = targetNode.outerHTML;
+      assert(targetRaw !== replaceRaw);
+      replaceRaw = await util.findWithFixup(
+          inputhtml, replaceRaw, lastFixup);
+      outputhtml = inputhtml.replace(
+          new RegExp(util.makeRegexForLine(replaceRaw)), targetRaw);
+    }
+
+    targetNode = Array.from(document.querySelectorAll('a.alternate[href="/register"]'));
+    if (targetNode.length === 1) {
+      [targetNode] = targetNode;
+      replaceRaw = targetNode.outerHTML;
+      targetNode.attributes.href.value = '/challenges';
+      targetNode.querySelector('iconify-icon').attributes.icon.value = 'fluent:music-note-2-24-filled';
+      targetNode.querySelector('span').innerHTML = 'Challenges';
+      targetRaw = targetNode.outerHTML;
+      assert(targetRaw !== replaceRaw);
+      replaceRaw = await util.findWithFixup(
+          inputhtml, replaceRaw, lastFixup);
+      outputhtml = outputhtml.replace(
+          new RegExp(util.makeRegexForLine(replaceRaw)), targetRaw);
+    }
+
+    // console.log(outputhtml);
+    // assert(false);
+
+    // const outputhtml = inputhtml.replace(
+    //     new RegExp(util.makeRegexForLine(deletion)), '');
+    if (outputhtml) {
+      assert(outputhtml !== inputhtml);
+
+      fs.writeFileSync(file, outputhtml);
+    }
   }
 
   return 0;

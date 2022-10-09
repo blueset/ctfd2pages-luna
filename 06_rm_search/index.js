@@ -21,14 +21,15 @@ const main = async function() {
 
     let targetNode = Array.from(document.querySelectorAll('input'))
         .filter((node) => node.attributes.placeholder
-            ?.value?.startsWith('Search for matching '));
+            ?.value?.startsWith('Search'));
 
     assert(targetNode.length === 1);
     [targetNode] = targetNode;
 
-    targetNode = targetNode.closest('div.row');
-    const deletionRaw = util.expandHTMLs(
-        targetNode, 'next', (node) => node.tagName === 'HR');
+    targetNode = targetNode.closest('form.searchForm');
+    // const deletionRaw = util.expandHTMLs(
+    //     targetNode, 'next', (node) => node.tagName === 'HR');
+    const deletionRaw = targetNode.outerHTML;
     const deletion = await util.findWithFixup(
         inputhtml, deletionRaw, lastFixup);
 

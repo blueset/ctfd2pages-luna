@@ -34,22 +34,22 @@ const main = async function() {
   };
 
   findReplace(
-      'Sorry about that',
+      'Sorry about that.',
       // eslint-disable-next-line max-len
-      'This site has been archived and is now served statically by GitHub Pages',
-      (src) => textNodes.filter((node) => node.textContent === src),
+      'This site has been archived and is now served statically by GitHub Pages.',
+      (src) => textNodes.filter((node) => node.textContent.trim() === src),
   );
-  findReplace(
-      'Powered by CTFd',
-      'Powered by <s>CTFd</s> GitHub Pages',
-      (src) => textNodes.filter((node) => node.textContent === src),
-  );
-  findReplace(
-      'https://ctfd.io',
-      'https://pages.github.com/',
-      (src) => Array.from(document.querySelectorAll('a'))
-          .filter((node) => node.attributes.href.value === src),
-  );
+  // findReplace(
+  //     'Powered by CTFd',
+  //     'Powered by <s>CTFd</s> GitHub Pages',
+  //     (src) => textNodes.filter((node) => node.textContent === src),
+  // );
+  // findReplace(
+  //     'https://ctfd.io',
+  //     'https://pages.github.com/',
+  //     (src) => Array.from(document.querySelectorAll('a'))
+  //         .filter((node) => node.attributes.href.value === src),
+  // );
 
   fs.writeFileSync(file, outputhtml);
 
