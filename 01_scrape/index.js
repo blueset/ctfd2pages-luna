@@ -136,6 +136,7 @@ class PageHandler {
 
     page.on('requestfinished', async (request) => {
       const requestUrl = request.url();
+      console.log("request finished:", requestUrl);
       const response = request.response();
       const originRedirect = this.redirectedTargets.get(requestUrl);
 
@@ -179,9 +180,12 @@ class PageHandler {
 
             await fs.promises.mkdir(path.dirname(filepath), {recursive: true});
 
+            console.log("saving:", requestUrl, "to", filepath);
             let buffer;
             try {
+              console.log("getting buffer:", requestUrl, "to", filepath);
               buffer = await response.buffer();
+              console.log("buffer retrieved:", buffer);
             } catch (err) {
               console.log(requestUrl, filepath);
               console.log(err);
@@ -241,11 +245,18 @@ class PageHandler {
         }
 
         // Solves Tab
-        this.browseCompleted = new HeartBeat();
-        await page.evaluate(() => {
-          document.querySelector('.solvers button').click();
-        }, chal);
-        await this.browseCompleted.wait();
+        const isSolversDisabled = await page.evaluate(() => document.querySelector('.solvers button').disabled, chal);
+        console.log('is solvers disabled', isSolversDisabled);
+        if (!isSolversDisabled) {
+          console.log('clicking solvers button', chal);
+          this.browseCompleted = new HeartBeat();
+          await page.evaluate(() => {
+            document.querySelector('.solvers button').click();
+          }, chal);
+          console.log('clicked', chal);
+          await this.browseCompleted.wait();
+          console.log('heartbeat received', chal);
+        }
 
         await page.keyboard.press('Escape');
       }
@@ -259,7 +270,7 @@ class PageHandler {
     this.setHooks(page);
 
     console.log('visiting:', this.pageUrl);
-    await page.goto(this.pageUrl);
+    await page.goto(this.pageUrl, {timeout: 0});
 
     await this.browseCompleted.wait();
 
@@ -268,17 +279,19 @@ class PageHandler {
     });
 
     for (let link of links) {
+      console.log('found link', link, this.parent.origin);
       if (!link.startsWith(this.parent.origin)) {
         continue;
       }
 
-      if (!(
-        link.startsWith(this.parent.origin + 'challenges') ||
-          link.startsWith(this.parent.origin + 'api/v1/challenge') ||
-          link.startsWith(this.parent.origin + 'files')
-      )) {
-        continue;
-      }
+      // if (!(
+      //   link.startsWith(this.parent.origin + 'challenges') ||
+      //   link.startsWith(this.parent.origin + 'rules') ||
+      //     link.startsWith(this.parent.origin + 'api/v1/challenge') ||
+      //     link.startsWith(this.parent.origin + 'files')
+      // )) {
+      //   continue;
+      // }
 
       link = new url.URL(link);
       link.hash = '';
@@ -364,6 +377,7 @@ class Ctfd2Pages {
   };
 
   pushpage(pageUrl) {
+    console.log('pushing:', pageUrl);
     if (this.visited.has(pageUrl)) {
       return;
     }
@@ -374,13 +388,14 @@ class Ctfd2Pages {
 
   async poppage(browser) {
     const pageUrl = this.toVisit.shift();
+    console.log('popping:', pageUrl);
     await new PageHandler(this, browser, pageUrl).run();
   }
 
   async run() {
     const browser = await puppeteer.launch({headless: true});
 
-    // this.pushpage(this.origin);
+    this.pushpage(this.origin);
     this.pushpage(`${this.origin}challenges`);
     this.pushpage(`${this.origin}404`);
 
@@ -395,6 +410,7 @@ class Ctfd2Pages {
       const filepath = this.urlToPath(handout);
       if (!this.completedDownloads.has(filepath)) {
         await fs.promises.mkdir(path.dirname(filepath), {recursive: true});
+        console.log("downloading:", handout, "to", filepath);
         await this.downloadFile(handout, filepath);
         console.log('done:', filepath);
       }
